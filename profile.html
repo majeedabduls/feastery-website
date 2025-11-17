@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Profile — Feastery</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-50 h-screen flex justify-center items-center">
+
+  <div class="bg-white shadow-lg p-8 rounded-xl w-full max-w-md">
+    <h2 class="text-2xl font-bold text-emerald-700 mb-4">User Profile</h2>
+
+    <div id="profileData" class="space-y-2 text-gray-700"></div>
+
+    <button onclick="logout()" class="mt-6 bg-red-500 text-white px-4 py-2 rounded w-full">
+      Logout
+    </button>
+  </div>
+
+  <script>
+    const user = JSON.parse(localStorage.getItem("feastery_user"));
+
+    if (!user) {
+      window.location.href = "login.html";
+    }
+
+    document.getElementById("profileData").innerHTML = `
+      <p><b>Name:</b> ${user.name}</p>
+      <p><b>Email:</b> ${user.email}</p>
+    `;
+
+    function logout() {
+      localStorage.clear();
+      window.location.href = "index.html";
+    }
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Us – Feastery</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+
+<body class="bg-gray-50">
+
+    <!-- NAVBAR (same design as home page) -->
+    <nav class="bg-white/90 backdrop-blur-md border-b sticky top-0 z-50">
+        <div class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <a href="index.html" class="flex flex-col leading-none">
+                <span class="text-2xl font-extrabold text-emerald-700">Feastery</span>
+                <span class="text-xs font-semibold text-emerald-600">Fresh and Natural</span>
+            </a>
+
+            <a href="index.html" class="text-sm text-gray-600 hover:text-emerald-600">← Back to Home</a>
+        </div>
+    </nav>
+
+    <!-- HERO -->
+    <section class="bg-green-100 py-20">
+        <div class="container mx-auto px-6 text-center">
+            <h1 class="text-4xl md:text-5xl font-extrabold text-emerald-800 mb-4">About Feastery</h1>
+            <p class="text-gray-700 text-lg max-w-2xl mx-auto">
+                We believe food should be simple, natural, and delicious. No chemicals, no shortcuts — only purity.
+            </p>
+        </div>
+    </section>
+
+    <!-- CONTENT -->
+    <section class="py-16">
+        <div class="container mx-auto px-6 grid md:grid-cols-2 gap-12">
+            
+            <div>
+                <h2 class="text-3xl font-bold text-emerald-800 mb-4">Our Story</h2>
+                <p class="text-gray-700 leading-relaxed mb-6">
+                    Feastery was born with a simple mission: bring back the authentic taste of Kerala snacks using
+                    natural ingredients and traditional recipes.
+                </p>
+                <p class="text-gray-700 leading-relaxed">
+                    From banana chips fried in pure coconut oil to handcrafted jackfruit fries, every Feastery product
+                    is made with love, purity, and tradition.
+                </p>
+            </div>
+
+            <img src="images/feastery-snacks.png"
+                 class="rounded-xl shadow-xl"
+                 alt="Feastery Snacks">
+        </div>
+    </section>
+
+    <!-- VALUES -->
+    <section class="py-16 bg-white">
+        <div class="container mx-auto px-6 text-center">
+            <h2 class="text-3xl font-bold text-emerald-800 mb-10">What We Stand For</h2>
+
+            <div class="grid md:grid-cols-3 gap-10">
+                <div class="p-6 bg-green-50 rounded-xl shadow">
+                    <h3 class="text-xl font-semibold text-emerald-700 mb-2">100% Natural</h3>
+                    <p class="text-gray-600">No preservatives, no artificial flavours. Only nature.</p>
+                </div>
+
+                <div class="p-6 bg-green-50 rounded-xl shadow">
+                    <h3 class="text-xl font-semibold text-emerald-700 mb-2">Handcrafted</h3>
+                    <p class="text-gray-600">Prepared in small batches to maintain quality.</p>
+                </div>
+
+                <div class="p-6 bg-green-50 rounded-xl shadow">
+                    <h3 class="text-xl font-semibold text-emerald-700 mb-2">Eco-Friendly</h3>
+                    <p class="text-gray-600">Responsible sourcing and sustainable packaging.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="bg-emerald-900 text-white py-8 mt-10 text-center">
+        © 2025 Feastery Fresh & Natural. All rights reserved.
+    </footer>
+
+</body>
+</html>
