@@ -1,0 +1,1032 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feastery - Fresh and Natural Snacks</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Font (Inter) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
+    <script>
+        // Custom Tailwind configuration to add the 'Inter' font
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        // Define a custom green palette
+                        brand: {
+                            light: '#f0fdf4',  // green-50
+                            DEFAULT: '#22c55e', // green-500
+                            medium: '#16a34a', // green-600
+                            dark: '#14532d'    // green-900
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Smooth scrolling for anchor links */
+        html {
+            scroll-behavior: smooth;
+        }
+        #cart-sidebar {
+            transition: transform 0.3s ease-in-out;
+        }
+        #cart-sidebar.translate-x-full {
+            transform: translateX(100%);
+        }
+        /* Style for the cart item scrollbar */
+        #cart-items::-webkit-scrollbar {
+            width: 6px;
+        }
+        #cart-items::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        #cart-items::-webkit-scrollbar-thumb {
+            background: #16a34a; /* brand-medium */
+            border-radius: 10px;
+        }
+        #cart-items::-webkit-scrollbar-thumb:hover {
+            background: #14532d; /* brand-dark */
+        }
+        /* Toast Notification */
+        #toast {
+            transition: opacity 0.3s, transform 0.3s;
+        }
+        /* Simple Modal */
+        #message-modal.hidden {
+            display: none;
+        }
+        @keyframes floatStrong {
+  0% {
+    transform: translateY(0px) translateX(0px) rotate(-1deg);
+  }
+  25% {
+    transform: translateY(-18px) translateX(8px) rotate(1deg);
+  }
+  50% {
+    transform: translateY(-5px) translateX(-6px) rotate(-2deg);
+  }
+  75% {
+    transform: translateY(-15px) translateX(10px) rotate(0.5deg);
+  }
+  100% {
+    transform: translateY(0px) translateX(0px) rotate(-1deg);
+  }
+}
+
+.hero-anim {
+  animation: floatStrong 5s ease-in-out infinite;
+}
+.product-card img {
+  transition: transform 0.4s ease;
+}
+
+.product-card:hover img {
+  transform: scale(1.08);
+}
+
+    </style>
+</head>
+<body class="font-sans bg-white text-gray-800"> 
+
+    <!-- Cart Sidebar -->
+    <div id="cart-sidebar" class="fixed top-0 right-0 h-full w-full max-w-md bg-white shadow-2xl z-[60] p-6 flex flex-col transform translate-x-full transition-transform duration-300 ease-in-out">
+        <div class="flex justify-between items-center border-b pb-4 mb-4">
+            <h2 class="text-2xl font-bold text-brand-dark">Your Cart</h2>
+            <button id="close-cart-btn" class="text-gray-500 hover:text-gray-800">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+        
+        <!-- Cart Items -->
+        <div id="cart-items" class="flex-grow overflow-y-auto pr-2">
+            <!-- Cart items will be dynamically injected here -->
+            <p id="empty-cart-msg" class="text-gray-500">Your cart is currently empty.</p>
+        </div>
+        
+        <!-- Cart Footer -->
+        <div class="border-t pt-4 mt-4">
+            <div class="flex justify-between items-center mb-4">
+                <span class="text-lg font-semibold text-gray-700">Subtotal:</span>
+                <span id="cart-subtotal" class="text-xl font-bold text-brand-dark">₹0.00</span>
+            </div>
+            <button id="checkout-btn" class="w-full bg-brand-medium text-white text-lg font-semibold py-3 px-6 rounded-full shadow-lg hover:bg-brand-dark transition duration-300">
+                Proceed to Checkout
+            </button>
+        </div>
+    </div>
+    <!-- Cart Overlay -->
+    <div id="cart-overlay" class="fixed inset-0 bg-black/30 z-[55] hidden" aria-hidden="true"></div>
+
+    <!-- Simple Modal for Messages -->
+    <div id="message-modal" class="fixed inset-0 z-[70] flex items-center justify-center p-4 hidden">
+        <div class="fixed inset-0 bg-black/50" id="modal-backdrop"></div>
+        <div class="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm z-10 relative">
+            <h3 id="modal-title" class="text-xl font-bold text-brand-dark mb-4">Message</h3>
+            <p id="modal-message" class="text-gray-600 mb-6">This is a message.</p>
+            <button id="modal-close-btn" class="w-full bg-brand-medium text-white font-semibold py-2 px-4 rounded-full hover:bg-brand-dark transition duration-300">
+                Got it
+            </button>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-5 left-1/2 -translate-x-1/2 bg-brand-dark text-white py-3 px-6 rounded-full shadow-lg opacity-0 transform translate-y-3 transition-all duration-300 z-50">
+        Item added to cart!
+    </div>
+
+    <!-- Header & Navigation -->
+    <!-- PREMIUM NAVBAR (replace your old <nav>) -->
+<nav class="bg-white/90 backdrop-blur-md border-b sticky top-0 z-50">
+  <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex items-center justify-between h-16">
+      <!-- Left: Logo -->
+      <!-- <a href="/" class="flex items-center gap-3">
+        <div class="text-2xl font-extrabold text-emerald-700 leading-none">Feastery</div>
+        <div class="text-xs font-semibold text-emerald-600 -mt-1">Fresh & Natural</div>
+      </a> -->
+      <a href="/" class="flex flex-col leading-none">
+  <span class="text-2xl font-extrabold text-emerald-700">Feastery</span>
+  <span class="text-xs font-semibold text-emerald-600 mt-0">Fresh and Natural</span>
+</a>
+
+
+      <!-- Center: Nav links -->
+      <div class="hidden md:flex items-center gap-8">
+        <a href="#home" class="text-gray-700 hover:text-emerald-600">Home</a>
+        <a href="#about" class="text-gray-700 hover:text-emerald-600">About</a>
+        <a href="#products" class="text-gray-700 hover:text-emerald-600">Products</a>
+        <a href="#contact" class="text-gray-700 hover:text-emerald-600">Contact</a>
+      </div>
+
+      <!-- Right: Cart + User -->
+      <div class="flex items-center gap-4">
+        <!-- Cart -->
+        <button id="cart-button" class="relative p-2 rounded hover:bg-gray-100">
+          <svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17"/>
+          </svg>
+          <span id="cart-badge" class="hidden absolute -top-2 -right-2 bg-emerald-600 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">0</span>
+        </button>
+
+        <!-- User area -->
+        <div id="userArea" class="relative">
+          <!-- Content injected by JS -->
+        </div>
+
+        <!-- Mobile menu button -->
+        <button id="menu-btn" class="md:hidden p-2 rounded hover:bg-gray-100">
+          <svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile nav (hidden on md+) -->
+    <div id="mobile-nav" class="hidden md:hidden pb-4">
+      <div class="flex flex-col gap-2 px-2">
+        <a href="#home" class="py-2 px-3 rounded hover:bg-gray-100">Home</a>
+        <a href="#about" class="py-2 px-3 rounded hover:bg-gray-100">About</a>
+        <a href="#products" class="py-2 px-3 rounded hover:bg-gray-100">Products</a>
+        <a href="#contact" class="py-2 px-3 rounded hover:bg-gray-100">Contact</a>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- User dropdown template styles (small inline styles to keep it self-contained) -->
+<style>
+  /* prevents user name from wrapping and truncates nicely */
+  .user-name-nowrap { white-space: nowrap; max-width: 160px; overflow: hidden; text-overflow: ellipsis; }
+</style>
+
+<script>
+  // Ensure this runs after DOM is ready
+  (function() {
+    const userArea = document.getElementById('userArea');
+
+    // Helper: build avatar with initials if no image
+    function avatarMarkup(name) {
+      const initials = (name || 'U').split(' ').map(s => s[0]).slice(0,2).join('').toUpperCase();
+      return `
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 flex items-center justify-center rounded-full bg-emerald-600 text-white font-semibold text-sm">
+            ${initials}
+          </div>
+        </div>
+      `;
+    }
+
+    // Render logged-out view (Login button)
+    function renderLoggedOut() {
+      userArea.innerHTML = `
+        <a href="/login.html" class="hidden sm:inline-block bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-md text-sm">Login</a>
+        <a href="/signup.html" class="ml-2 text-sm text-gray-700 hover:underline">Sign up</a>
+      `;
+    }
+
+    // Render logged-in view (avatar + name + dropdown)
+    function renderLoggedIn(user) {
+      const nameSafe = (user.name || user.email || 'User');
+      userArea.innerHTML = `
+        <button id="userBtn" aria-haspopup="true" aria-expanded="false"
+          class="flex items-center gap-3 px-2 py-1.5 rounded hover:bg-gray-100 focus:outline-none">
+          <div class="w-9 h-9 flex items-center justify-center rounded-full bg-emerald-600 text-white font-semibold text-sm">${(nameSafe.split(' ').map(s=>s[0]).slice(0,2).join('') || 'U').toUpperCase()}</div>
+          <div class="hidden sm:flex flex-col text-left">
+            <span class="text-sm text-gray-700 user-name-nowrap">${nameSafe}</span>
+            <span class="text-xs text-gray-400">Member</span>
+          </div>
+          <svg class="w-4 h-4 text-gray-500 hidden sm:block" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06-.02L10 10.67l3.71-3.48a.75.75 0 111.02 1.1l-4.22 3.96a.75.75 0 01-1.02 0L5.24 8.29a.75.75 0 01-.01-1.08z" clip-rule="evenodd"/></svg>
+        </button>
+
+        <div id="userDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white border rounded-md shadow-lg py-1 z-50">
+          <a href="/profile.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Profile</a>
+          <a href="/orders.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">My Orders</a>
+          <div class="border-t my-1"></div>
+          <button id="logoutBtn" class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-50">Logout</button>
+        </div>
+      `;
+
+      // dropdown logic
+      const userBtn = document.getElementById('userBtn');
+      const dd = document.getElementById('userDropdown');
+      const logoutBtn = document.getElementById('logoutBtn');
+
+      userBtn.addEventListener('click', (e) => {
+        const visible = !dd.classList.contains('hidden');
+        // hide any other open dropdowns (simple)
+        document.querySelectorAll('#userDropdown').forEach(x => x.classList.add('hidden'));
+        if (!visible) dd.classList.remove('hidden'); else dd.classList.add('hidden');
+      });
+
+      // close dropdown on outside click
+      document.addEventListener('click', (ev) => {
+        if (!userArea.contains(ev.target)) dd.classList.add('hidden');
+      });
+
+      logoutBtn.addEventListener('click', () => {
+        localStorage.removeItem('feastery_user');
+        localStorage.removeItem('feastery_token');
+        // reload to update UI
+        window.location.reload();
+      });
+    }
+
+    // Mobile menu toggle
+    const menuBtn = document.getElementById('menu-btn');
+    const mobileNav = document.getElementById('mobile-nav');
+    menuBtn.addEventListener('click', () => mobileNav.classList.toggle('hidden'));
+
+    // Boot: read user from localStorage
+    function loadUserUI() {
+      try {
+        const raw = localStorage.getItem('feastery_user');
+        if (!raw) { renderLoggedOut(); return; }
+        const user = JSON.parse(raw);
+        renderLoggedIn(user);
+      } catch(e) {
+        renderLoggedOut();
+      }
+    }
+
+    loadUserUI();
+  })();
+</script>
+
+
+    <!-- Hero Section -->
+    <header id="home" class="bg-brand-light pt-12 pb-20 md:pt-20 md:pb-28">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row items-center gap-12">
+                <!-- Text Content -->
+                <div class="md:w-1/2 text-center md:text-left">
+                    <span class="text-brand-medium font-semibold uppercase tracking-wider">Fresh & Natural Snacks</span>
+                    <h1 class="text-4xl md:text-6xl font-extrabold text-brand-dark mt-2 mb-6 leading-tight">
+                        Taste the Goodness. <br> Feel the Natural.
+                    </h1>
+                    <p class="text-lg text-gray-600 mb-8 max-w-lg mx-auto md:mx-0">
+                        Welcome to Feastery, where every bite is packed with real, wholesome ingredients. No artificial anything. Just pure, natural deliciousness.
+                    </p>
+                    <a href="#products" class="inline-block bg-brand-medium text-white text-lg font-semibold py-3 px-10 rounded-full shadow-lg hover:bg-brand-dark transform hover:-translate-y-0.5 transition duration-300">
+                        Discover Our Snacks
+                    </a>
+                </div>
+                
+                <!-- Image Content -->
+                <!-- <div class="md:w-1/2">
+                    <img 
+                        src="images/feastery-snacks.png" 
+                        alt="Feastery snack products showcase" 
+                        class="rounded-2xl shadow-2xl w-full h-auto"
+                        onerror="this.src='https://placehold.co/800x500/a7f3d0/14532d?text=Feastery+Snacks'"
+                    >
+                </div> -->
+                <!-- Add this container to your hero section image -->
+<div class="md:w-1/2 flex justify-center items-center">
+  <img 
+    src="images/feastery-snacks.png" 
+    alt="Feastery snack products showcase" 
+    class="rounded-2xl shadow-2xl w-full h-auto animate-float"
+    onerror="this.src='https://placehold.co/800x500/a7f3d0/14532d?text=Feastery+Snacks'"
+  >
+</div>
+
+<style>
+/* Smooth floating animation */
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-12px); }
+  100% { transform: translateY(0px); }
+}
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+</style>
+
+            </div>
+        </div>
+        
+    </header>
+
+    <!-- Features Section -->
+    <section id="about" class="py-20 bg-white">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-extrabold text-brand-dark mb-4">Why Choose Feastery?</h2>
+                <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+                    We're committed to providing snacks that aren't just tasty, but also genuinely good for you and the planet.
+                </p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12">
+                <!-- Feature 1 -->
+                <div class="text-center p-6 bg-brand-light rounded-2xl shadow-md transform hover:shadow-lg hover:-translate-y-1 transition duration-300">
+                    <div class="flex items-center justify-center h-16 w-16 bg-brand-medium text-white rounded-full mx-auto mb-4">
+                        <!-- Icon: Leaf -->
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path><path d="M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path><path d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </div>
+                    <h3 class="text-2xl font-bold text-brand-dark mb-2">All Natural Ingredients</h3>
+                    <p class="text-gray-600">
+                        We source the highest-quality, non-GMO, and organic ingredients. If you can't pronounce it, you won't find it in our snacks.
+                    </p>
+                </div>
+                
+                <!-- Feature 2 -->
+                <div class="text-center p-6 bg-brand-light rounded-2xl shadow-md transform hover:shadow-lg hover:-translate-y-1 transition duration-300">
+                    <div class="flex items-center justify-center h-16 w-16 bg-brand-medium text-white rounded-full mx-auto mb-4">
+                        <!-- Icon: Heart -->
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 016.364 0L12 7.636l1.318-1.318a4.5 4.5 0 016.364 6.364L12 20.364l-7.682-7.682a4.5 4.5 0 010-6.364z"></path></svg>
+                    </div>
+                    <h3 class="text-2xl font-bold text-brand-dark mb-2">No Added "Nasties"</h3>
+                    <p class="text-gray-600">
+                        Absolutely no artificial flavors, colors, preservatives, or added sugars. Just the natural taste of real food.
+                    </p>
+                </div>
+                
+                <!-- Feature 3 -->
+                <div class="text-center p-6 bg-brand-light rounded-2xl shadow-md transform hover:shadow-lg hover:-translate-y-1 transition duration-300">
+                    <div class="flex items-center justify-center h-16 w-16 bg-brand-medium text-white rounded-full mx-auto mb-4">
+                        <!-- Icon: Globe -->
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h.5A2.5 2.5 0 0020 5.5V3.935m-16.91-1.598A9 9 0 0121.91 2.338m-19.82 0A9 9 0 002.09 21.662m19.82 0A9 9 0 012.09 2.338M12 21a9 9 0 009-9h-9v9z"></path></svg>
+                    </div>
+                    <h3 class="text-2xl font-bold text-brand-dark mb-2">Sustainably Sourced</h3>
+                    <p class="text-gray-600">
+                        We partner with ethical farms and use eco-friendly packaging, because snacking good should also feel good.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Product Showcase -->
+    <section id="products" class="py-20 bg-gray-50">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-extrabold text-brand-dark mb-4">Our Fan Favorites</h2>
+                <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+                    Check out the snacks our customers can't get enough of.
+                </p>
+            </div>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                <!-- Product Card 1 -->
+                <div class="product-card bg-white rounded-2xl shadow-lg overflow-hidden flex flex-col" data-id="p1" data-name="Banana chips kerala style" data-price="139">
+                    <img 
+                        src="./images/IMG_9258.webp" 
+                        alt="Banana chips kerala style" 
+                        class="w-full h-56 object-cover"
+                        onerror="this.src='https://placehold.co/400x300/a7f3d0/14532d?text=Veggie+Crisps'"
+                    >
+                    <div class="p-6 flex-grow">
+                        <h3 class="text-xl font-bold text-brand-dark mb-2">Banana chips kerala style</h3>
+                        <p class="text-gray-600 mb-4">
+                            A crunchy, savory blend of nendran bananas fried in pure coconut oil.
+                        </p>
+                        <p class="text-xl font-bold text-brand-dark mb-4">₹ 139 /225g</p>
+                    </div>
+                    <div class="p-6 pt-0">
+                         <button class="add-to-cart-btn w-full text-center bg-brand-medium text-white font-semibold py-2 px-4 rounded-full hover:bg-brand-dark transition duration-300">
+                            Add to Cart
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Product Card 2 -->
+                <div class="product-card bg-white rounded-2xl shadow-lg overflow-hidden flex flex-col" data-id="p2" data-name="Banana chips masala mix" data-price="149">
+                    <img 
+                        src="./images/Gemini_Generated_Image_3hrk9m3hrk9m3hrk.png" 
+                        alt="Banana chips masala mix" 
+                        class="w-full h-56 object-cover"
+                        onerror="this.src='https://placehold.co/400x300/a7f3d0/14532d?text=Trail+Mix'"
+                    >
+                    <div class="p-6 flex-grow">
+                        <h3 class="text-xl font-bold text-brand-dark mb-2">Banana chips masala mix</h3>
+                        <p class="text-gray-600 mb-4">
+                            Added some magic masala for spicy lovers.
+                        </p>
+                        <p class="text-xl font-bold text-brand-dark mb-4">₹ 149 /225g</p>
+                    </div>
+                    <div class="p-6 pt-0">
+                         <button class="add-to-cart-btn w-full text-center bg-brand-medium text-white font-semibold py-2 px-4 rounded-full hover:bg-brand-dark transition duration-300">
+                            Add to Cart
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Product Card 3 -->
+                <div class="product-card bg-white rounded-2xl shadow-lg overflow-hidden flex flex-col" data-id="p3" data-name="Banana chips riped" data-price="159">
+                    <img 
+                        src="./images/WhatsApp Image 2025-11-16 at 11.29.08 PM.jpeg" 
+                        alt="Banana chips riped" 
+                        class="w-full h-56 object-cover"
+                        onerror="this.src='https://placehold.co/400x300/a7f3d0/14532d?text=Fruit+Bars'"
+                    >
+                    <div class="p-6 flex-grow">
+                        <h3 class="text-xl font-bold text-brand-dark mb-2">Banana chips riped</h3>
+                        <p class="text-gray-600 mb-4">
+                            The riped banana chips makes a natural sugarfull taste.
+                        </p>
+                        <p class="text-xl font-bold text-brand-dark mb-4">₹ 159 /225g</p>
+                    </div>
+                    <div class="p-6 pt-0">
+                         <button class="add-to-cart-btn w-full text-center bg-brand-medium text-white font-semibold py-2 px-4 rounded-full hover:bg-brand-dark transition duration-300">
+                            Add to Cart
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Product Card 4 -->
+                <div class="product-card bg-white rounded-2xl shadow-lg overflow-hidden flex flex-col" data-id="p4" data-name="Jackfruit fry" data-price="189">
+                    <img 
+                        src="./images/Gemini_Generated_Image_ghlnwyghlnwyghln.png" 
+                        alt="Jackfruit fry" 
+                        class="w-full h-56 object-cover"
+                        onerror="this.src='https://placehold.co/400x300/a7f3d0/14532d?text=Granola'"
+                    >
+                    <div class="p-6 flex-grow">
+                        <h3 class="text-xl font-bold text-brand-dark mb-2">Jackfruit fry</h3>
+                        <p class="text-gray-600 mb-4">
+                            Feel the real taste of kerala's iconic fruit.
+                        </p>
+                        <p class="text-xl font-bold text-brand-dark mb-4">₹ 189 /225g</p>
+                    </div>
+                    <div class="p-6 pt-0">
+                         <button class="add-to-cart-btn w-full text-center bg-brand-medium text-white font-semibold py-2 px-4 rounded-full hover:bg-brand-dark transition duration-300">
+                            Add to Cart
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Product Card 5 (NEW) -->
+                <div class="product-card bg-white rounded-2xl shadow-lg overflow-hidden flex flex-col" data-id="p5" data-name="Four cut chips" data-price="139">
+                    <img 
+                        src="./images/ChatGPT Image Nov 16, 2025, 11_49_38 PM.png" 
+                        alt="Four cut chips" 
+                        class="w-full h-56 object-cover"
+                        onerror="this.src='https://placehold.co/400x300/a7f3d0/14532d?text=Spicy+Mango'"
+                    >
+                    <div class="p-6 flex-grow">
+                        <h3 class="text-xl font-bold text-brand-dark mb-2">Four cut chips</h3>
+                        <p class="text-gray-600 mb-4">
+                            One of the kerala special snacks for the festival onam.
+                        </p>
+                        <p class="text-xl font-bold text-brand-dark mb-4">₹ 139 /225g</p>
+                    </div>
+                    <div class="p-6 pt-0">
+                         <button class="add-to-cart-btn w-full text-center bg-brand-medium text-white font-semibold py-2 px-4 rounded-full hover:bg-brand-dark transition duration-300">
+                            Add to Cart
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Product Card 6 (NEW) -->
+                <div class="product-card bg-white rounded-2xl shadow-lg overflow-hidden flex flex-col" data-id="p6" data-name="sarkara uppery" data-price="139">
+                    <img 
+                        src="./images/sarkara.png" 
+                        alt="sarkara uppery" 
+                        class="w-full h-56 object-cover"
+                        onerror="this.src='https://placehold.co/400x300/a7f3d0/14532d?text=Cashew+Clusters'"
+                    >
+                    <div class="p-6 flex-grow">
+                        <h3 class="text-xl font-bold text-brand-dark mb-2">sarkara uppery</h3>
+                        <p class="text-gray-600 mb-4">
+                            Added jaggery and cardamom powder for flavor.
+                        </p>
+                        <p class="text-xl font-bold text-brand-dark mb-4">₹ 139 /225g</p>
+                    </div>
+                    <div class="p-6 pt-0">
+                         <button class="add-to-cart-btn w-full text-center bg-brand-medium text-white font-semibold py-2 px-4 rounded-full hover:bg-brand-dark transition duration-300">
+                            Add to Cart
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+      <!-- DYNAMIC PRODUCTS FROM DATABASE -->
+<!-- <h2 class="text-3xl font-extrabold text-brand-dark text-center mt-20">Fresh From Feastery Factory</h2> -->
+
+<!-- <div id="product-list" 
+     class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mt-10">
+</div> -->
+  
+    </section>
+    <!-- Testimonials (kept unchanged) -->
+     <section id="testimonials" aria-label="What our customers are saying" class="bg-slate-50 py-20 sm:py-32">
+  <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <div class="mx-auto max-w-2xl md:text-center">
+        <h2 class="text-3xl font-extrabold text-brand-dark mb-8">Don't just take our word for it.</h2>
+        <h2 class="text-5xl font-extrabold tracking-tighter sm:text-6xl lg:text-7xl 
+               text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-cyan-500 
+               leading-tight">
+        What Our Customers Are Saying
+    </h2>
+      
+    </div>
+    <ul role="list"
+      class="mx-auto mt-16 grid max-w-2xl grid-cols-1 gap-6 sm:gap-8 lg:mt-20 lg:max-w-none lg:grid-cols-3">
+      <li>
+        <ul role="list" class="flex flex-col gap-y-6 sm:gap-y-8">
+          <li>
+            <figure class="relative rounded-2xl bg-white p-6 shadow-xl shadow-slate-900/10"><svg aria-hidden="true"
+                width="105" height="78" class="absolute left-6 top-6 fill-slate-100">
+                <path
+                  d="M25.086 77.292c-4.821 0-9.115-1.205-12.882-3.616-3.767-2.561-6.78-6.102-9.04-10.622C1.054 58.534 0 53.411 0 47.686c0-5.273.904-10.396 2.712-15.368 1.959-4.972 4.746-9.567 8.362-13.786a59.042 59.042 0 0 1 12.43-11.3C28.325 3.917 33.599 1.507 39.324 0l11.074 13.786c-6.479 2.561-11.677 5.951-15.594 10.17-3.767 4.219-5.65 7.835-5.65 10.848 0 1.356.377 2.863 1.13 4.52.904 1.507 2.637 3.089 5.198 4.746 3.767 2.41 6.328 4.972 7.684 7.684 1.507 2.561 2.26 5.5 2.26 8.814 0 5.123-1.959 9.19-5.876 12.204-3.767 3.013-8.588 4.52-14.464 4.52Zm54.24 0c-4.821 0-9.115-1.205-12.882-3.616-3.767-2.561-6.78-6.102-9.04-10.622-2.11-4.52-3.164-9.643-3.164-15.368 0-5.273.904-10.396 2.712-15.368 1.959-4.972 4.746-9.567 8.362-13.786a59.042 59.042 0 0 1 12.43-11.3C82.565 3.917 87.839 1.507 93.564 0l11.074 13.786c-6.479 2.561-11.677 5.951-15.594 10.17-3.767 4.219-5.65 7.835-5.65 10.848 0 1.356.377 2.863 1.13 4.52.904 1.507 2.637 3.089 5.198 4.746 3.767 2.41 6.328 4.972 7.684 7.684 1.507 2.561 2.26 5.5 2.26 8.814 0 5.123-1.959 9.19-5.876 12.204-3.767 3.013-8.588 4.52-14.464 4.52Z">
+                </path>
+              </svg>
+              <blockquote class="relative">
+                <p class="text-lg tracking-tight text-slate-900">"I'm so glad I found Feastery! <br>The Veggie Crisps are my absolute favorite".</p>
+              </blockquote>
+              <figcaption class="relative mt-6 flex items-center justify-between border-t border-slate-100 pt-6">
+                <div>
+                  <div class="font-display text-base text-slate-900">atitya krishnan</div>
+                </div>
+                <div class="overflow-hidden rounded-full bg-slate-50">
+                  <img alt="" class="h-14 w-14 object-cover" style="color:transparent" src="./images/WhatsApp Image 2025-11-18 at 10.45.37 AM.jpeg">
+                </div>
+              </figcaption>
+            </figure>
+          </li>
+        </ul>
+      </li>
+      <li>
+        <ul role="list" class="flex flex-col gap-y-6 sm:gap-y-8">
+          <li>
+            <figure class="relative rounded-2xl bg-white p-6 shadow-xl shadow-slate-900/10"><svg aria-hidden="true"
+                width="105" height="78" class="absolute left-6 top-6 fill-slate-100">
+                <path
+                  d="M25.086 77.292c-4.821 0-9.115-1.205-12.882-3.616-3.767-2.561-6.78-6.102-9.04-10.622C1.054 58.534 0 53.411 0 47.686c0-5.273.904-10.396 2.712-15.368 1.959-4.972 4.746-9.567 8.362-13.786a59.042 59.042 0 0 1 12.43-11.3C28.325 3.917 33.599 1.507 39.324 0l11.074 13.786c-6.479 2.561-11.677 5.951-15.594 10.17-3.767 4.219-5.65 7.835-5.65 10.848 0 1.356.377 2.863 1.13 4.52.904 1.507 2.637 3.089 5.198 4.746 3.767 2.41 6.328 4.972 7.684 7.684 1.507 2.561 2.26 5.5 2.26 8.814 0 5.123-1.959 9.19-5.876 12.204-3.767 3.013-8.588 4.52-14.464 4.52Zm54.24 0c-4.821 0-9.115-1.205-12.882-3.616-3.767-2.561-6.78-6.102-9.04-10.622-2.11-4.52-3.164-9.643-3.164-15.368 0-5.273.904-10.396 2.712-15.368 1.959-4.972 4.746-9.567 8.362-13.786a59.042 59.042 0 0 1 12.43-11.3C82.565 3.917 87.839 1.507 93.564 0l11.074 13.786c-6.479 2.561-11.677 5.951-15.594 10.17-3.767 4.219-5.65 7.835-5.65 10.848 0 1.356.377 2.863 1.13 4.52.904 1.507 2.637 3.089 5.198 4.746 3.767 2.41 6.328 4.972 7.684 7.684 1.507 2.561 2.26 5.5 2.26 8.814 0 5.123-1.959 9.19-5.876 12.204-3.767 3.013-8.588 4.52-14.464 4.52Z">
+                </path>
+              </svg>
+              <blockquote class="relative">
+                <p class="text-lg tracking-tight text-slate-900">It's so hard to find snacks that are healthy and actually taste amazing. I'm a customer for life!".</p>
+              </blockquote>
+              <figcaption class="relative mt-6 flex items-center justify-between border-t border-slate-100 pt-6">
+                <div>
+                  <div class="font-display text-base text-slate-900">Abdul Azeez</div>
+                </div>
+                <div class="overflow-hidden rounded-full bg-slate-50">
+                  <img alt="" class="h-14 w-14 object-cover" style="color:transparent" src="./images/WhatsApp Image 2025-11-18 at 10.43.41 AM.jpeg">
+                </div>
+              </figcaption>
+            </figure>
+          </li>
+        </ul>
+      </li>
+      <li>
+        <ul role="list" class="flex flex-col gap-y-6 sm:gap-y-8">
+          <li>
+            <figure class="relative rounded-2xl bg-white p-6 shadow-xl shadow-slate-900/10"><svg aria-hidden="true"
+                width="105" height="78" class="absolute left-6 top-6 fill-slate-100">
+                <path
+                  d="M25.086 77.292c-4.821 0-9.115-1.205-12.882-3.616-3.767-2.561-6.78-6.102-9.04-10.622C1.054 58.534 0 53.411 0 47.686c0-5.273.904-10.396 2.712-15.368 1.959-4.972 4.746-9.567 8.362-13.786a59.042 59.042 0 0 1 12.43-11.3C28.325 3.917 33.599 1.507 39.324 0l11.074 13.786c-6.479 2.561-11.677 5.951-15.594 10.17-3.767 4.219-5.65 7.835-5.65 10.848 0 1.356.377 2.863 1.13 4.52.904 1.507 2.637 3.089 5.198 4.746 3.767 2.41 6.328 4.972 7.684 7.684 1.507 2.561 2.26 5.5 2.26 8.814 0 5.123-1.959 9.19-5.876 12.204-3.767 3.013-8.588 4.52-14.464 4.52Zm54.24 0c-4.821 0-9.115-1.205-12.882-3.616-3.767-2.561-6.78-6.102-9.04-10.622-2.11-4.52-3.164-9.643-3.164-15.368 0-5.273.904-10.396 2.712-15.368 1.959-4.972 4.746-9.567 8.362-13.786a59.042 59.042 0 0 1 12.43-11.3C82.565 3.917 87.839 1.507 93.564 0l11.074 13.786c-6.479 2.561-11.677 5.951-15.594 10.17-3.767 4.219-5.65 7.835-5.65 10.848 0 1.356.377 2.863 1.13 4.52.904 1.507 2.637 3.089 5.198 4.746 3.767 2.41 6.328 4.972 7.684 7.684 1.507 2.561 2.26 5.5 2.26 8.814 0 5.123-1.959 9.19-5.876 12.204-3.767 3.013-8.588 4.52-14.464 4.52Z">
+                </path>
+              </svg>
+              <blockquote class="relative">
+                <p class="text-lg tracking-tight text-slate-900">I can feel the real taste of kerala banana and pure cocunut...Thankyou feastery for that.</p>
+              </blockquote>
+              <figcaption class="relative mt-6 flex items-center justify-between border-t border-slate-100 pt-6">
+                <div>
+                  <div class="font-display text-base text-slate-900">Haris Muhammed</div>
+                </div>
+                <div class="overflow-hidden rounded-full bg-slate-50">
+                  <img alt="" class="h-14 w-14 object-cover" style="color:transparent" src="./images/WhatsApp Image 2025-11-17 at 12.16.13 AM.jpeg">
+                </div>
+              </figcaption>
+            </figure>
+          </li>
+        </ul>
+      </li>
+    </ul>
+  </div>
+</section>
+
+    <!-- Footer -->
+    <footer id="contact" class="bg-brand-dark text-white">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-16">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <!-- Brand Info -->
+                <div>
+                    <h3 class="text-3xl font-extrabold text-white mb-4">Feastery</h3>
+                    <p class="text-green-200">
+                        Fresh and Natural Snacks. <br>
+                        Taste the goodness.
+                    </p>
+                </div>
+                
+                <!-- Quick Links -->
+                <div>
+                    <h4 class="text-lg font-semibold text-white uppercase tracking-wider mb-4">Links</h4>
+                    <ul class="space-y-2">
+                        <li><a href="about.html" class="text-green-200 hover:text-white transition">About Us</a></li>
+                        <li><a href="products.html" class="text-green-200 hover:text-white transition">Products</a></li>
+                        <li><a href="faqs.html" class="text-green-200 hover:text-white transition">FAQs</a></li>
+                        <li><a href="contact.html" class="text-green-200 hover:text-white transition">Contact</a></li>
+                    </ul>
+                </div>
+
+                <!-- Legal -->
+                <div>
+                    <h4 class="text-lg font-semibold text-white uppercase tracking-wider mb-4">Legal</h4>
+                    <ul class="space-y-2">
+                        <li><a href="privacy.html" class="text-green-200 hover:text-white transition">Privacy Policy</a></li>
+                        <li><a href="term.html" class="text-green-200 hover:text-white transition">Terms of Service</a></li>
+                        <li><a href="refund.html" class="text-green-200 hover:text-white transition">Refund Policy</a></li>
+                    </ul>
+                </div>
+
+                <!-- Social Media -->
+                <div>
+                    <h4 class="text-lg font-semibold text-white uppercase tracking-wider mb-4">Follow Us</h4>
+                    <div class="flex space-x-4">
+                        <a href="#" class="text-green-200 hover:text-white transition" aria-label="Facebook">
+                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.04c-5.5 0-10 4.49-10 10.02 0 5 3.66 9.15 8.44 9.9v-7H7.9v-2.9h2.54V9.84c0-2.5 1.5-3.89 3.78-3.89 1.1 0 2.23.2 2.23.2v2.47h-1.26c-1.24 0-1.63.77-1.63 1.56v1.88h2.78l-.45 2.9h-2.33v7.02c4.78-.75 8.44-4.9 8.44-9.9C22 6.53 17.5 2.04 12 2.04z"></path></svg>
+                        </a>
+                        <a href="#" class="text-green-200 hover:text-white transition" aria-label="Instagram">
+                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2c-2.7 0-3 .01-4.06.06-1.06.05-1.79.22-2.42.47-.65.25-1.23.59-1.77 1.14-.54.54-.89 1.12-1.14 1.77-.25.63-.42 1.36-.47 2.42C2.01 9 2 9.3 2 12s.01 3 .06 4.06c.05 1.06.22 1.79.47 2.42.25.65.59 1.23 1.14 1.77.54.54 1.12.89 1.77 1.14.63.25 1.36.42 2.42.47C9 21.99 9.3 22 12 22s3-.01 4.06-.06c1.06-.05 1.79-.22 2.42-.47.65-.25 1.23-.59 1.77-1.14.54-.54.89-1.12 1.14-1.77.25-.63.42-1.36.47-2.42C21.99 15 22 14.7 22 12s-.01-3-.06-4.06c-.05-1.06-.22-1.79-.47-2.42-.25-.65-.59-1.23-1.14-1.77-.54-.54-1.12-.89-1.77-1.14-.63-.25-1.36-.42-2.42-.47C15 2.01 14.7 2 12 2zm0 1.8c2.67 0 2.98.01 4.03.06 1.02.05 1.6.21 2.12.42.54.21.93.48 1.34.89.41.41.68.8.89 1.34.21.52.37 1.1.42 2.12.05 1.05.06 1.36.06 4.03s-.01 2.98-.06 4.03c-.05 1.02-.21 1.6-.42 2.12-.21.54-.48.93-.89 1.34-.41.41-.8.68-1.34.89-.52.21-1.1.37-2.12.42-1.05.05-1.36.06-4.03.06s-2.98-.01-4.03-.06c-1.02-.05-1.6-.21-2.12-.42-.54-.21-.93-.48-1.34-.89-.41-.41-.68-.8-.89-1.34-.21-.52-.37-1.1-.42-2.12-.05-1.05-.06-1.36-.06-4.03s.01-2.98.06-4.03c.05-1.02.21-1.6.42-2.12.21-.54.48-.93.89-1.34.41-.41.8-.68 1.34-.89.52-.21 1.1-.37 2.12-.42C9.02 3.81 9.33 3.8 12 3.8zm0 3.14c-2.97 0-5.36 2.4-5.36 5.36s2.4 5.36 5.36 5.36 5.36-2.4 5.36-5.36S14.97 6.94 12 6.94zm0 8.92c-1.97 0-3.56-1.6-3.56-3.56s1.6-3.56 3.56-3.56 3.56 1.6 3.56 3.56-1.6 3.56-3.56 3.56zm4.35-8.4c-.6 0-1.08-.48-1.08-1.08s.48-1.08 1.08-1.08 1.08.48 1.08 1.08-.48 1.08-1.08 1.08z"></path></svg>
+                        </a>
+                        <a href="#" class="text-green-200 hover:text-white transition" aria-label="Twitter">
+                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M22.46 6c-.77.34-1.6.57-2.46.67.9-.54 1.58-1.4 1.9-2.37-.84.5-1.77.86-2.76 1.05-.79-.84-1.92-1.36-3.14-1.36-2.38 0-4.3 1.92-4.3 4.3 0 .34.04.67.11.98-3.57-.18-6.73-1.89-8.85-4.49-.37.63-.58 1.37-.58 2.15 0 1.5.76 2.82 1.92 3.6- .7-.02-1.36-.21-1.94-.53v.05c0 2.09 1.49 3.84 3.46 4.23-.36.1-.74.15-1.13.15-.28 0-.55-.03-.81-.08.55 1.72 2.14 2.96 4.03 3-1.48 1.16-3.35 1.85-5.38 1.85-.35 0-.7 0-1.04-.06 1.92 1.23 4.2 1.95 6.66 1.95 8 0 12.38-6.62 12.38-12.38 0-.19 0-.38-.01-.56.85-.62 1.59-1.39 2.17-2.26z"></path></svg>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <br>
+             <p style="text-align: center;">feasteryfreshandnatural@gmail.com</p>
+             <p style="text-align: center;">pazhayannur-kerala-india</p>
+            
+            <div class="border-t border-green-700 mt-12 pt-8 text-center text-green-300">
+                <p>&copy; 2025 Feastery Fresh and Natural. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript for Mobile Menu & Cart (functional fixes) -->
+    <script>
+        // --- Mobile Menu Logic ---
+       document.getElementById('menu-btn').addEventListener('click', function() {
+            var menu = document.getElementById('mobile-menu');
+            menu.classList.toggle('hidden');
+        });
+
+        // Close menu when a link is clicked
+        document.querySelectorAll('#mobile-menu a').forEach(function(link) {
+            link.addEventListener('click', function() {
+                document.getElementById('mobile-menu').classList.add('hidden');
+            });
+        });
+
+        // --- Shopping Cart Logic ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // Use proper parsing and INR formatting
+            const currencyFormatter = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 2 });
+
+            let cart = JSON.parse(localStorage.getItem('feasteryCart')) || [];
+            
+            const cartSidebar = document.getElementById('cart-sidebar');
+            const cartOverlay = document.getElementById('cart-overlay');
+            const cartButton = document.getElementById('cart-button');
+            // const mobileCartButton = document.getElementById('mobile-cart-button');
+            const closeCartButton = document.getElementById('close-cart-btn');
+            const addToCartButtons = document.querySelectorAll('.add-to-cart-btn');
+            const cartItemsContainer = document.getElementById('cart-items');
+            const emptyCartMsg = document.getElementById('empty-cart-msg');
+            const cartSubtotalEl = document.getElementById('cart-subtotal');
+            const cartBadge = document.getElementById('cart-badge');
+            // const mobileCartBadge = document.getElementById('mobile-cart-badge');
+            const toast = document.getElementById('toast');
+            const checkoutBtn = document.getElementById('checkout-btn');
+
+            // Modal elements
+            const messageModal = document.getElementById('message-modal');
+            const modalBackdrop = document.getElementById('modal-backdrop');
+            const modalTitle = document.getElementById('modal-title');
+            const modalMessage = document.getElementById('modal-message');
+            const modalCloseBtn = document.getElementById('modal-close-btn');
+
+            // --- Core Functions ---
+
+            /**
+             * Adds an item to the cart
+             */
+            function addToCart(e) {
+                const productCard = e.target.closest('.product-card');
+                const productId = productCard.dataset.id;
+                const productName = productCard.dataset.name;
+
+                // Prefer reading the image directly from the <img> so what the user sees is what is added
+                const imageEl = productCard.querySelector('img');
+                const productImage = imageEl ? imageEl.src : '';
+
+                // Ensure numeric price (data-price should contain plain number in rupees)
+                let productPrice = parseFloat(String(productCard.dataset.price).replace(/[^0-9.\-]+/g, '')) || 0;
+
+                // Check if item is already in cart
+                const existingItem = cart.find(item => item.id === productId);
+                
+                if (existingItem) {
+                    existingItem.quantity += 1;
+                } else {
+                    cart.push({
+                        id: productId,
+                        name: productName,
+                        price: productPrice,
+                        image: productImage,
+                        quantity: 1
+                    });
+                }
+                
+                saveCart();
+                renderCart();
+                updateCartBadge();
+                showToast();
+                openCart(); // Open cart on add
+            }
+
+            /**
+             * Renders the cart items in the sidebar
+             */
+            function renderCart() {
+                // Clear current items
+                cartItemsContainer.innerHTML = '';
+                
+                if (cart.length === 0) {
+                    cartItemsContainer.appendChild(emptyCartMsg);
+                    emptyCartMsg.style.display = 'block';
+                } else {
+                    emptyCartMsg.style.display = 'none';
+                    cart.forEach(item => {
+                        const cartItem = document.createElement('div');
+                        cartItem.className = 'flex items-center gap-4 mb-4';
+                        cartItem.innerHTML = `
+                            <img src="${item.image}" alt="${item.name}" class="w-20 h-20 rounded-lg object-cover">
+                            <div class="flex-grow">
+                                <h4 class="font-semibold text-brand-dark">${item.name}</h4>
+                                <p class="text-sm text-gray-500">${currencyFormatter.format(item.price)}</p>
+                                <div class="flex items-center gap-2 mt-2">
+                                    <button class="cart-quantity-btn font-medium text-lg text-brand-medium hover:text-brand-dark" data-id="${item.id}" data-change="-1">-</button>
+                                    <span class="font-bold text-gray-700 w-6 text-center">${item.quantity}</span>
+                                    <button class="cart-quantity-btn font-medium text-lg text-brand-medium hover:text-brand-dark" data-id="${item.id}" data-change="1">+</button>
+                                </div>
+                            </div>
+                            <button class="cart-remove-btn text-red-500 hover:text-red-700" data-id="${item.id}" aria-label="Remove ${item.name}">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            </button>
+                        `;
+                        cartItemsContainer.appendChild(cartItem);
+                    });
+                }
+                
+                calculateSubtotal();
+            }
+
+            /**
+             * Updates the quantity of a cart item
+             */
+            function updateQuantity(productId, change) {
+                const item = cart.find(item => item.id === productId);
+                if (!item) return;
+                
+                item.quantity += change;
+                
+                if (item.quantity <= 0) {
+                    removeFromCart(productId);
+                } else {
+                    saveCart();
+                    renderCart();
+                    updateCartBadge();
+                }
+            }
+
+            /**
+             * Removes an item from the cart
+             */
+            function removeFromCart(productId) {
+                cart = cart.filter(item => item.id !== productId);
+                saveCart();
+                renderCart();
+                updateCartBadge();
+            }
+
+            /**
+             * Calculates and displays the subtotal
+             */
+            function calculateSubtotal() {
+                const subtotal = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+                cartSubtotalEl.textContent = currencyFormatter.format(subtotal);
+            }
+
+            /**
+             * Updates the cart badge count
+             */
+            function updateCartBadge() {
+                const totalItems = cart.reduce((total, item) => total + item.quantity, 0);
+                cartBadge.textContent = totalItems;
+                // mobileCartBadge.textContent = totalItems;
+                
+                // Show/hide badge
+                cartBadge.classList.toggle('hidden', totalItems === 0);
+                // Slight UX: hide mobile count number when 0
+                if (totalItems === 0) {
+                    mobileCartBadge.textContent = '0';
+                }
+            }
+
+            /**
+             * Saves the cart to localStorage
+             */
+            function saveCart() {
+                localStorage.setItem('feasteryCart', JSON.stringify(cart));
+            }
+
+            /**
+             * Opens the cart sidebar
+             */
+            function openCart() {
+                cartSidebar.classList.remove('translate-x-full');
+                cartOverlay.classList.remove('hidden');
+                document.body.style.overflow = 'hidden'; // Prevent background scrolling
+            }
+
+            /**
+             * Closes the cart sidebar
+             */
+            function closeCart() {
+                cartSidebar.classList.add('translate-x-full');
+                cartOverlay.classList.add('hidden');
+                document.body.style.overflow = ''; // Restore background scrolling
+            }
+            
+            /**
+             * Shows a toast notification
+             */
+            let toastTimer;
+            function showToast() {
+                clearTimeout(toastTimer);
+                toast.classList.remove('opacity-0', 'translate-y-3');
+                toast.classList.add('opacity-100', 'translate-y-0');
+                
+                toastTimer = setTimeout(() => {
+                    toast.classList.remove('opacity-100', 'translate-y-0');
+                    toast.classList.add('opacity-0', 'translate-y-3');
+                }, 1600);
+            }
+
+            /**
+             * Shows a modal message
+             */
+            function showModal(title, message) {
+                modalTitle.textContent = title;
+                modalMessage.textContent = message;
+                messageModal.classList.remove('hidden');
+            }
+            
+            /**
+             * Hides the modal message
+             */
+            function hideModal() {
+                messageModal.classList.add('hidden');
+            }
+
+            // --- Event Listeners ---
+
+            // Add to Cart buttons
+            addToCartButtons.forEach(button => {
+                button.addEventListener('click', addToCart);
+            });
+
+            // Cart open/close listeners
+            cartButton.addEventListener('click', openCart);
+            // mobileCartButton.addEventListener('click', openCart);
+            closeCartButton.addEventListener('click', closeCart);
+            cartOverlay.addEventListener('click', closeCart);
+            
+            // Listen for clicks inside the cart items container (for quantity/remove)
+            cartItemsContainer.addEventListener('click', (e) => {
+                // Quantity change
+                if (e.target.closest('.cart-quantity-btn')) {
+                    const btn = e.target.closest('.cart-quantity-btn');
+                    const productId = btn.dataset.id;
+                    const change = parseInt(btn.dataset.change);
+                    updateQuantity(productId, change);
+                }
+                
+                // Remove item
+                if (e.target.closest('.cart-remove-btn')) {
+                    const btn = e.target.closest('.cart-remove-btn');
+                    const productId = btn.dataset.id;
+                    removeFromCart(productId);
+                }
+            });
+            
+            // Checkout button
+            
+
+            checkoutBtn.addEventListener('click', () => {
+                if (cart.length > 0) {
+                    console.log('Proceeding to checkout with:', cart);
+                    // Use modal instead of alert
+                    showModal('Thank You!', 'Thank you for your order! (This is a demo - no order has been placed). Your cart will now be cleared.');
+                    cart = [];
+                    saveCart();
+                    renderCart();
+                    updateCartBadge();
+                    closeCart();
+                } else {
+                    // Use modal instead of alert
+                    showModal('Empty Cart', 'Your cart is currently empty. Please add some snacks!');
+                }
+            });
+
+            // Modal close listeners
+            modalCloseBtn.addEventListener('click', hideModal);
+            modalBackdrop.addEventListener('click', hideModal);
+
+            // --- Initial Load ---
+            renderCart();
+            updateCartBadge();
+        });
+    </script>
+<!-- ................................................................. -->
+<script src="api.js"></script>
+
+<script>
+  async function loadFeasteryProducts() {
+    const products = await getProducts();
+
+    let html = "";
+
+    products.forEach(p => {
+      html += `
+        <div class="product-card">
+          <img src="images/${p.image}" alt="${p.name}">
+          <h3>${p.name}</h3>
+          <p>${p.description}</p>
+          <strong>₹${p.price}</strong>
+        </div>
+      `;
+    });
+
+    document.getElementById("product-list").innerHTML = html;
+  }
+
+  loadFeasteryProducts();
+</script>
+<!-- .................................................................. -->
+
+</body>
+</html>

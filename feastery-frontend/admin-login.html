@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Login — Feastery</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 h-screen flex justify-center items-center">
+
+  <div class="bg-white p-8 rounded-xl shadow max-w-md w-full">
+    <h2 class="text-2xl font-bold text-emerald-700 mb-4 text-center">Admin Login</h2>
+
+    <form id="adminForm" class="space-y-3">
+      <input id="email" placeholder="Admin Email" class="w-full p-3 border rounded" />
+      <input id="password" type="password" placeholder="Password" class="w-full p-3 border rounded" />
+
+      <button class="w-full bg-emerald-600 text-white p-3 rounded hover:bg-emerald-700">
+        Login
+      </button>
+
+      <p id="msg" class="text-center text-sm mt-2"></p>
+    </form>
+  </div>
+
+  <script>
+    const ADMIN_EMAIL = "admin@feastery.com";
+    const ADMIN_PASS = "FeasteryAdmin101";
+
+    document.getElementById("adminForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+
+      const email = document.getElementById("email").value;
+      const pass = document.getElementById("password").value;
+
+      const msg = document.getElementById("msg");
+
+      if (email === ADMIN_EMAIL && pass === ADMIN_PASS) {
+        localStorage.setItem("feastery_admin", "logged");
+        window.location.href = "admin.html";
+      } else {
+        msg.textContent = "Invalid admin credentials";
+        msg.className = "text-red-600 text-center";
+      }
+    });
+  </script>
+
+</body>
+</html>
